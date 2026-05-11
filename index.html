@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Algonquin Log">
+<meta name="theme-color" content="#1a2e1a">
+<title>Algonquin Trip Log</title>
+<style>
+:root{--bark:#2c1f0e;--moss:#1a2e1a;--lichen:#5a7a4a;--birch:#e8e0cc;--cream:#f5f0e8;--amber:#c17f3a;--ember:#d64a1a;--water:#3a6b7a;--mist:#8aab9a;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:'Courier New',Courier,monospace;background:var(--moss);color:var(--birch);min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 20% 20%,rgba(44,31,14,.6) 0%,transparent 60%),radial-gradient(ellipse at 80% 80%,rgba(26,46,26,.8) 0%,transparent 60%);pointer-events:none;z-index:0;}
+.app{position:relative;z-index:1;max-width:480px;margin:0 auto;}
+header{padding:18px 20px 12px;border-bottom:1px solid rgba(90,122,74,.3);display:flex;align-items:center;justify-content:space-between;background:rgba(26,46,26,.8);backdrop-filter:blur(8px);position:sticky;top:0;z-index:100;}
+.header-left h1{font-family:Georgia,'Times New Roman',serif;font-size:20px;font-weight:600;color:var(--birch);line-height:1.1;}
+.header-left p{font-size:10px;color:var(--mist);letter-spacing:.15em;text-transform:uppercase;margin-top:2px;}
+.header-icon{font-size:26px;opacity:.8;}
+.tabs{display:flex;border-bottom:1px solid rgba(90,122,74,.2);background:rgba(22,42,22,.9);position:sticky;top:68px;z-index:99;}
+.tab{flex:1;padding:11px 4px;background:none;border:none;border-bottom:2px solid transparent;color:var(--mist);font-family:'Courier New',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;}
+.tab.active{color:var(--amber);border-bottom:2px solid var(--amber);}
+.view{display:none;padding:16px 16px 100px;}.view.active{display:block;}
+.sl{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--lichen);margin:22px 0 10px;display:flex;align-items:center;gap:8px;}
+.sl::after{content:'';flex:1;height:1px;background:rgba(90,122,74,.25);}
+.field{margin-bottom:14px;}
+label{display:block;font-size:11px;color:var(--mist);letter-spacing:.08em;margin-bottom:5px;}
+input[type=text],input[type=date],input[type=number],input[type=password],select,textarea{width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(90,122,74,.3);border-radius:6px;color:var(--birch);font-family:'Courier New',monospace;font-size:15px;padding:10px 12px;outline:none;-webkit-appearance:none;appearance:none;}
+input:focus,select:focus,textarea:focus{border-color:var(--lichen);background:rgba(255,255,255,.09);}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235a7a4a' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;background-color:rgba(255,255,255,.06);}
+select option{background:var(--bark);}
+textarea{resize:vertical;min-height:80px;line-height:1.5;}
+.star-row{display:flex;gap:6px;margin-top:4px;}
+.star{font-size:28px;cursor:pointer;color:rgba(193,127,58,.25);user-select:none;}
+.star.lit{color:var(--amber);}
+.pill-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;}
+.pill{padding:7px 14px;border-radius:20px;border:1px solid rgba(90,122,74,.4);background:none;color:var(--mist);font-family:'Courier New',monospace;font-size:12px;cursor:pointer;}
+.pill.on{background:var(--lichen);border-color:var(--lichen);color:var(--cream);}
+.btn-primary{width:100%;padding:15px;background:var(--amber);color:var(--bark);border:none;border-radius:8px;font-family:'Courier New',monospace;font-size:14px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;margin-top:24px;}
+.btn-primary:active{background:#a06a2a;}
+.btn-outline{padding:12px 16px;background:none;border:1px solid rgba(193,127,58,.4);border-radius:8px;color:var(--amber);font-family:'Courier New',monospace;font-size:13px;cursor:pointer;width:100%;text-align:center;margin-top:10px;display:block;}
+.card{background:rgba(255,255,255,.04);border:1px solid rgba(90,122,74,.2);border-radius:10px;padding:14px 16px;margin-bottom:10px;cursor:pointer;}
+.card:active{background:rgba(255,255,255,.07);}
+.card-title{font-family:Georgia,serif;font-size:17px;color:var(--birch);line-height:1.2;}
+.card-sub{font-size:11px;color:var(--mist);margin-top:2px;}
+.card-stars{font-size:13px;color:var(--amber);}
+.tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;}
+.tag{font-size:10px;padding:3px 8px;border-radius:10px;background:rgba(90,122,74,.2);color:var(--mist);}
+.tag.good{background:rgba(58,107,122,.25);color:#8ac8d8;}
+.tag.warn{background:rgba(214,74,26,.2);color:#e88a6a;}
+.tag.amber{background:rgba(193,127,58,.2);color:var(--amber);}
+.dh{display:flex;align-items:center;gap:12px;margin-bottom:18px;}
+.back{background:none;border:none;color:var(--amber);font-size:22px;cursor:pointer;padding:4px;flex-shrink:0;}
+.dtitle{font-family:Georgia,serif;font-size:20px;color:var(--birch);line-height:1.2;}
+.db{background:rgba(255,255,255,.04);border:1px solid rgba(90,122,74,.15);border-radius:8px;padding:12px 14px;margin-bottom:8px;}
+.dbl{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--lichen);margin-bottom:5px;}
+.dbv{font-size:14px;color:var(--birch);line-height:1.5;}
+.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+.srow{display:flex;gap:10px;margin-top:18px;}
+.sbtn{flex:1;padding:12px;background:rgba(58,107,122,.25);border:1px solid rgba(58,107,122,.4);border-radius:8px;color:#8ac8d8;font-family:'Courier New',monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;}
+.dbtn{padding:12px 16px;background:rgba(214,74,26,.12);border:1px solid rgba(214,74,26,.25);border-radius:8px;color:#e88a6a;cursor:pointer;font-size:14px;}
+.day-entry{background:rgba(255,255,255,.04);border:1px solid rgba(90,122,74,.2);border-radius:10px;padding:14px;margin-bottom:10px;}
+.day-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.day-lbl{font-family:Georgia,serif;font-size:15px;color:var(--amber);}
+.edit-btn{background:none;border:1px solid rgba(90,122,74,.3);border-radius:5px;color:var(--mist);font-size:11px;padding:4px 10px;cursor:pointer;font-family:'Courier New',monospace;}
+.linked{display:flex;align-items:center;gap:8px;background:rgba(193,127,58,.1);border:1px solid rgba(193,127,58,.25);border-radius:6px;padding:8px 12px;margin-top:8px;cursor:pointer;}
+.linked-name{font-size:12px;color:var(--amber);}
+.photo-btn{width:100%;padding:14px;background:rgba(255,255,255,.04);border:1px dashed rgba(90,122,74,.4);border-radius:8px;color:var(--mist);font-family:'Courier New',monospace;font-size:13px;cursor:pointer;text-align:center;display:flex;align-items:center;justify-content:center;gap:8px;}
+.pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px;}
+.pthumb{position:relative;aspect-ratio:1;border-radius:6px;overflow:hidden;}
+.pthumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.prem{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.7);border:none;color:#fff;font-size:13px;line-height:22px;text-align:center;cursor:pointer;padding:0;}
+.dpgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px;}
+.dphoto{aspect-ratio:1;border-radius:6px;overflow:hidden;cursor:pointer;}
+.dphoto img{width:100%;height:100%;object-fit:cover;display:block;}
+.lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:500;align-items:center;justify-content:center;flex-direction:column;}
+.lightbox.open{display:flex;}
+.lightbox img{max-width:95vw;max-height:85vh;object-fit:contain;border-radius:6px;}
+.lbclose{position:absolute;top:16px;right:20px;background:none;border:none;color:#fff;font-size:32px;cursor:pointer;}
+.lbnav{display:flex;gap:24px;margin-top:16px;}
+.lbnav button{background:rgba(255,255,255,.12);border:none;color:#fff;font-size:22px;padding:8px 18px;border-radius:6px;cursor:pointer;}
+.empty{text-align:center;padding:50px 20px;color:var(--mist);opacity:.6;}
+.empty .icon{font-size:44px;margin-bottom:10px;}
+.empty p{font-size:13px;line-height:1.6;}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:flex-end;justify-content:center;}
+.modal.open{display:flex;}
+.msheet{background:#1e341e;border-radius:16px 16px 0 0;width:100%;max-width:480px;max-height:88vh;overflow-y:auto;padding:20px 16px 40px;animation:slideUp .3s ease;}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.mtitle{font-family:Georgia,serif;font-size:18px;color:var(--birch);margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;}
+.mclose{background:none;border:none;color:var(--mist);font-size:22px;cursor:pointer;}
+.loption{display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(255,255,255,.04);border:1px solid rgba(90,122,74,.2);border-radius:8px;margin-bottom:8px;cursor:pointer;}
+.loption.selected{border-color:var(--amber);background:rgba(193,127,58,.08);}
+.loption-name{font-size:13px;color:var(--birch);}
+.loption-date{font-size:11px;color:var(--mist);}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--lichen);color:var(--cream);padding:10px 20px;border-radius:20px;font-size:13px;z-index:999;transition:transform .3s ease;white-space:nowrap;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.6) sepia(1) hue-rotate(60deg);}
+#photo-input,#day-photo-input{display:none;}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="header-left"><h1>Algonquin Trip Log</h1><p>Offline Field Reporter</p></div>
+    <div class="header-icon">&#127794;</div>
+  </header>
+  <div class="tabs">
+    <button class="tab active" id="tab-log" onclick="switchTab('log')">+ Campsite</button>
+    <button class="tab" id="tab-reports" onclick="switchTab('reports')">Campsites</button>
+    <button class="tab" id="tab-trips" onclick="switchTab('trips')">Trips</button>
+    <button class="tab" id="tab-settings" onclick="switchTab('settings')">Settings</button>
+  </div>
+
+  <!-- CAMPSITE FORM -->
+  <div class="view active" id="view-log">
+    <div class="sl">Basic Info</div>
+    <div class="field"><label>Lake / Location</label><input type="text" id="f-lake" placeholder="e.g. Canoe Lake, Burnt Island Lake"></div>
+    <div class="field"><label>Site Number / Name</label><input type="text" id="f-site" placeholder="e.g. Site 3, North Shore"></div>
+    <div class="field"><label>Date</label><input type="date" id="f-date"></div>
+    <div class="field"><label>Party Size</label><input type="number" id="f-party" min="1" max="20" placeholder="# of people"></div>
+    <div class="sl">Site Quality</div>
+    <div class="field"><label>Overall Rating</label><div class="star-row" id="stars"><span class="star" data-val="1">&#9733;</span><span class="star" data-val="2">&#9733;</span><span class="star" data-val="3">&#9733;</span><span class="star" data-val="4">&#9733;</span><span class="star" data-val="5">&#9733;</span></div></div>
+    <div class="field"><label>Tent Pad</label><div class="pill-row"><button class="pill" data-group="tentpad" data-val="Excellent">Excellent</button><button class="pill" data-group="tentpad" data-val="Good">Good</button><button class="pill" data-group="tentpad" data-val="Fair">Fair</button><button class="pill" data-group="tentpad" data-val="Poor">Poor</button></div></div>
+    <div class="field"><label>Privacy</label><div class="pill-row"><button class="pill" data-group="privacy" data-val="Excellent">Excellent</button><button class="pill" data-group="privacy" data-val="Good">Good</button><button class="pill" data-group="privacy" data-val="Fair">Fair</button><button class="pill" data-group="privacy" data-val="Poor">Poor</button></div></div>
+    <div class="field"><label>Shade</label><div class="pill-row"><button class="pill" data-group="shade" data-val="Full shade">Full shade</button><button class="pill" data-group="shade" data-val="Partial">Partial</button><button class="pill" data-group="shade" data-val="Open / sunny">Open / sunny</button></div></div>
+    <div class="sl">Terrain</div>
+    <div class="field"><label>Site Terrain</label><div class="pill-row"><button class="pill" data-group="terrain" data-val="Level">Level</button><button class="pill" data-group="terrain" data-val="Hilly">Hilly</button><button class="pill" data-group="terrain" data-val="Hard / rocky">Hard / rocky</button><button class="pill" data-group="terrain" data-val="Marshy">Marshy</button></div></div>
+    <div class="sl">Fire &amp; Water</div>
+    <div class="field"><label>Fire Pit</label><div class="pill-row"><button class="pill" data-group="firepit" data-val="Good grate">Good grate</button><button class="pill" data-group="firepit" data-val="No grate">No grate</button><button class="pill" data-group="firepit" data-val="Damaged">Damaged</button><button class="pill" data-group="firepit" data-val="No fire pit">No fire pit</button></div></div>
+    <div class="field"><label>Firewood</label><div class="pill-row"><button class="pill" data-group="wood" data-val="Abundant">Abundant</button><button class="pill" data-group="wood" data-val="Some">Some</button><button class="pill" data-group="wood" data-val="Scarce">Scarce</button><button class="pill" data-group="wood" data-val="None">None</button></div></div>
+    <div class="field"><label>Water Source</label><div class="pill-row"><button class="pill" data-group="water" data-val="Lake (clear)">Lake - clear</button><button class="pill" data-group="water" data-val="Lake (murky)">Lake - murky</button><button class="pill" data-group="water" data-val="Stream nearby">Stream nearby</button><button class="pill" data-group="water" data-val="None visible">None visible</button></div></div>
+    <div class="field"><label>Canoe Landing</label><div class="pill-row"><button class="pill" data-group="landing" data-val="Easy beach">Easy beach</button><button class="pill" data-group="landing" data-val="Rocky">Rocky</button><button class="pill" data-group="landing" data-val="Steep / tricky">Steep / tricky</button><button class="pill" data-group="landing" data-val="No good landing">No good landing</button></div></div>
+    <div class="sl">Swimability</div>
+    <div class="field"><label>Swimming Bottom</label><div class="pill-row"><button class="pill" data-group="swim" data-val="Sand">Sand</button><button class="pill" data-group="swim" data-val="Rock">Rock</button><button class="pill" data-group="swim" data-val="Muck">Muck</button><button class="pill" data-group="swim" data-val="No swimming">No swimming</button></div></div>
+    <div class="sl">Thunderbox</div>
+    <div class="field"><label>Outhouse Condition</label><div class="pill-row"><button class="pill" data-group="thunderbox" data-val="New / good">New - Good</button><button class="pill" data-group="thunderbox" data-val="New / gross">New - Gross</button><button class="pill" data-group="thunderbox" data-val="Old / good">Old - Good</button><button class="pill" data-group="thunderbox" data-val="Old / gross">Old - Gross</button><button class="pill" data-group="thunderbox" data-val="None">None</button></div></div>
+    <div class="sl">Weather &amp; Conditions</div>
+    <div class="field"><label>Weather</label><div class="pill-row"><button class="pill" data-group="weather" data-val="Sunny">Sunny</button><button class="pill" data-group="weather" data-val="Partly cloudy">Partly cloudy</button><button class="pill" data-group="weather" data-val="Rain">Rain</button><button class="pill" data-group="weather" data-val="Storm">Storm</button><button class="pill" data-group="weather" data-val="Overcast">Overcast</button></div></div>
+    <div class="field"><label>Bugs</label><div class="pill-row"><button class="pill" data-group="bugs" data-val="None">None</button><button class="pill" data-group="bugs" data-val="Mild">Mild</button><button class="pill" data-group="bugs" data-val="Moderate">Moderate</button><button class="pill" data-group="bugs" data-val="Brutal">Brutal</button></div></div>
+    <div class="field"><label>Wildlife Sightings (select all that apply)</label><div class="pill-row"><button class="pill" data-group="wildlife" data-val="Moose">Moose</button><button class="pill" data-group="wildlife" data-val="Loon">Loon</button><button class="pill" data-group="wildlife" data-val="Beaver">Beaver</button><button class="pill" data-group="wildlife" data-val="Bear signs">Bear signs</button><button class="pill" data-group="wildlife" data-val="Otter">Otter</button><button class="pill" data-group="wildlife" data-val="Other">Other</button></div></div>
+    <div class="sl">Photos</div>
+    <div class="field"><label>Attach Photos</label><input type="file" id="photo-input" accept="image/*" multiple><button class="photo-btn" onclick="document.getElementById('photo-input').click()">&#128247; Choose Photos</button><div class="pgrid" id="photo-preview"></div></div>
+    <div class="sl">Notes</div>
+    <div class="field"><label>Notes &amp; Tips</label><textarea id="f-notes" placeholder="Anything future paddlers should know..."></textarea></div>
+    <div class="field"><label>Would You Return?</label><div class="pill-row"><button class="pill" data-group="return" data-val="Definitely">Definitely</button><button class="pill" data-group="return" data-val="Maybe">Maybe</button><button class="pill" data-group="return" data-val="No">No</button></div></div>
+    <button class="btn-primary" onclick="saveReport()">Save Campsite Report</button>
+  </div>
+
+  <!-- CAMPSITE LIST -->
+  <div class="view" id="view-reports"><div id="reports-list"></div></div>
+
+  <!-- CAMPSITE DETAIL -->
+  <div class="view" id="view-detail"><div id="detail-content"></div></div>
+
+  <!-- TRIPS LIST -->
+  <div class="view" id="view-trips"><div id="trips-list"></div></div>
+
+  <!-- TRIP DETAIL -->
+  <div class="view" id="view-trip-detail"><div id="trip-detail-content"></div></div>
+
+  <!-- SETTINGS -->
+  <div class="view" id="view-settings">
+    <div class="sl" style="margin-top:8px">API Key</div>
+    <div class="field"><label>Anthropic API Key</label><input type="password" id="api-key-input" placeholder="sk-ant-api03-..."></div>
+    <div style="font-size:11px;color:var(--mist);margin-top:6px;line-height:1.5">Stored on your device only. Required for AI summaries when you have internet.</div>
+    <button class="btn-primary" onclick="saveApiKey()" style="margin-top:16px">Save API Key</button>
+    <div class="sl">AI Summary</div>
+    <div class="db"><div class="dbl">How it works</div><div class="dbv" style="font-size:13px;line-height:1.6">When back in cell range, open any campsite or trip and tap AI Summary to generate a shareable write-up.</div></div>
+  </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <button class="lbclose" onclick="closeLightbox()">&#215;</button>
+  <img id="lightbox-img" src="" alt="">
+  <div class="lbnav" onclick="event.stopPropagation()">
+    <button onclick="lightboxNav(-1)">&#8592;</button>
+    <button onclick="lightboxNav(1)">&#8594;</button>
+  </div>
+</div>
+
+<!-- NEW TRIP MODAL -->
+<div class="modal" id="modal-trip">
+  <div class="msheet">
+    <div class="mtitle"><span id="trip-modal-title">New Trip</span><button class="mclose" onclick="closeModal('modal-trip')">&#215;</button></div>
+    <div class="field"><label>Trip Name</label><input type="text" id="t-name" placeholder="e.g. Burntroot Loop 2026"></div>
+    <div class="field"><label>Start Date</label><input type="date" id="t-start"></div>
+    <div class="field"><label>End Date</label><input type="date" id="t-end"></div>
+    <div class="field"><label>Route / Lakes</label><input type="text" id="t-route" placeholder="e.g. Canoe to Burnt Island to Otterslide"></div>
+    <div class="field"><label>Party Members</label><input type="text" id="t-party" placeholder="e.g. Drew, Sarah, Mike"></div>
+    <div class="field"><label>Weather Summary</label><textarea id="t-weather" placeholder="General weather across the trip..." style="min-height:60px"></textarea></div>
+    <div class="field"><label>Trip Highlights</label><textarea id="t-highlights" placeholder="Best moments, memorable spots..." style="min-height:70px"></textarea></div>
+    <div class="field"><label>Notes</label><textarea id="t-notes" placeholder="Anything else worth remembering..." style="min-height:60px"></textarea></div>
+    <button class="btn-primary" onclick="saveTrip()">Save Trip</button>
+  </div>
+</div>
+
+<!-- NEW DAY MODAL -->
+<div class="modal" id="modal-day">
+  <div class="msheet">
+    <div class="mtitle"><span id="day-modal-title">Add Day</span><button class="mclose" onclick="closeModal('modal-day')">&#215;</button></div>
+    <div class="field"><label>Date</label><input type="date" id="d-date"></div>
+    <div class="field"><label>Day Label</label><input type="text" id="d-label" placeholder="e.g. Day 1, Rest Day, Portage Day"></div>
+    <div class="field"><label>Lakes Paddled</label><input type="text" id="d-lakes" placeholder="e.g. Canoe Lake to Joe Lake"></div>
+    <div class="field"><label>Portages</label><input type="text" id="d-portages" placeholder="e.g. 3 portages, 520m total"></div>
+    <div class="field"><label>Distance (km)</label><input type="number" id="d-distance" placeholder="Approx km paddled" min="0" step="0.5"></div>
+    <div class="field"><label>Weather</label><div class="pill-row"><button class="pill" data-group="d-weather" data-val="Sunny">Sunny</button><button class="pill" data-group="d-weather" data-val="Partly cloudy">Partly cloudy</button><button class="pill" data-group="d-weather" data-val="Rain">Rain</button><button class="pill" data-group="d-weather" data-val="Storm">Storm</button><button class="pill" data-group="d-weather" data-val="Overcast">Overcast</button></div></div>
+    <div class="field"><label>Highlights</label><textarea id="d-highlights" placeholder="Best part of the day..." style="min-height:60px"></textarea></div>
+    <div class="field"><label>Notes</label><textarea id="d-notes" placeholder="Conditions, observations, tips..." style="min-height:70px"></textarea></div>
+    <div class="field"><label>Link a Campsite Report</label><div id="campsite-picker"></div></div>
+    <div class="field"><label>Photos</label><input type="file" id="day-photo-input" accept="image/*" multiple><button class="photo-btn" onclick="document.getElementById('day-photo-input').click()">&#128247; Choose Photos</button><div class="pgrid" id="day-photo-preview"></div></div>
+    <button class="btn-primary" onclick="saveDay()">Save Day</button>
+  </div>
+</div>
+
+<!-- AI SUMMARY MODAL -->
+<div class="modal" id="modal-ai">
+  <div class="msheet">
+    <div class="mtitle"><span>AI Summary</span><button class="mclose" onclick="closeModal('modal-ai')">&#215;</button></div>
+    <div class="field"><label>Style</label><div class="pill-row"><button class="pill" id="ai-facebook" onclick="setAiStyle('facebook')">Facebook Post</button><button class="pill" id="ai-journal" onclick="setAiStyle('journal')">Personal Journal</button></div></div>
+    <button class="btn-primary" id="ai-gen-btn" onclick="generateSummary()">Generate Summary</button>
+    <div id="ai-result" style="display:none;margin-top:20px">
+      <div class="sl">Generated Summary</div>
+      <div id="ai-text" style="background:rgba(255,255,255,.04);border:1px solid rgba(90,122,74,.2);border-radius:8px;padding:14px;font-size:14px;line-height:1.7;color:var(--birch);white-space:pre-wrap;margin-bottom:12px"></div>
+      <button class="sbtn" style="width:100%" onclick="copyAiText()">Copy Summary</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var selectedRating=0, currentDetail=null, currentTrip=null;
+var pendingPhotos=[], pendingDayPhotos=[], lightboxPhotos=[], lightboxIndex=0;
+var editingTripId=null, editingDayId=null, activeTripId=null;
+var selectedCampsite=null, dayWeather=null;
+var aiType=null, aiId=null, aiStyle="facebook";
+var sel={};
+
+document.addEventListener("DOMContentLoaded", function() {
+  document.getElementById("f-date").value = today();
+  document.getElementById("t-start").value = today();
+  document.getElementById("t-end").value = today();
+  document.getElementById("d-date").value = today();
+
+  document.querySelectorAll("#stars .star").forEach(function(s) {
+    s.addEventListener("click", function() { selectedRating=parseInt(s.dataset.val); renderStars(); });
+  });
+
+  document.querySelectorAll("#view-log .pill").forEach(function(p) {
+    p.addEventListener("click", function() { handlePill(p, sel); });
+  });
+
+  document.querySelectorAll("#modal-day .pill[data-group='d-weather']").forEach(function(p) {
+    p.addEventListener("click", function() {
+      document.querySelectorAll("#modal-day .pill[data-group='d-weather']").forEach(function(x){x.classList.remove("on");});
+      dayWeather = p.dataset.val;
+      p.classList.add("on");
+    });
+  });
+
+  document.getElementById("photo-input").addEventListener("change", function(e) { handlePhotos(e, pendingPhotos, "photo-preview"); });
+  document.getElementById("day-photo-input").addEventListener("change", function(e) { handlePhotos(e, pendingDayPhotos, "day-photo-preview"); });
+
+  renderReportsList();
+  renderTripsList();
+});
+
+function today() { return new Date().toISOString().slice(0,10); }
+
+function handlePill(p, store) {
+  var g = p.dataset.group, v = p.dataset.val;
+  if (g === "wildlife") {
+    if (!store[g]) store[g] = [];
+    var i = store[g].indexOf(v);
+    if (i > -1) { store[g].splice(i,1); p.classList.remove("on"); }
+    else { store[g].push(v); p.classList.add("on"); }
+  } else {
+    document.querySelectorAll(".pill[data-group='" + g + "']").forEach(function(x){x.classList.remove("on");});
+    if (store[g] === v) { delete store[g]; }
+    else { store[g] = v; p.classList.add("on"); }
+  }
+}
+
+function switchTab(tab) {
+  ["log","reports","trips","settings"].forEach(function(n) {
+    document.getElementById("tab-"+n).classList.toggle("active", n===tab);
+    document.getElementById("view-"+n) && document.getElementById("view-"+n).classList.remove("active");
+  });
+  var v = document.getElementById("view-"+tab);
+  if (v) v.classList.add("active");
+  if (tab==="reports") renderReportsList();
+  if (tab==="trips") renderTripsList();
+  if (tab==="settings") { var k=localStorage.getItem("anthropic_api_key"); if(k) document.getElementById("api-key-input").value=k; }
+}
+
+function openModal(id) { document.getElementById(id).classList.add("open"); }
+function closeModal(id) { document.getElementById(id).classList.remove("open"); }
+
+function getReports() { try { return JSON.parse(localStorage.getItem("reports")||"[]"); } catch(e) { return []; } }
+function saveReports(r) { localStorage.setItem("reports", JSON.stringify(r)); }
+function getTrips() { try { return JSON.parse(localStorage.getItem("trips")||"[]"); } catch(e) { return []; } }
+function saveTrips(t) { localStorage.setItem("trips", JSON.stringify(t)); }
+
+function handlePhotos(e, arr, pid) {
+  Array.from(e.target.files).forEach(function(file) {
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      var img = new Image();
+      img.onload = function() {
+        var canvas = document.createElement("canvas");
+        var max=800, w=img.width, h=img.height;
+        if (w>max||h>max) { if(w>h){h=Math.round(h*max/w);w=max;}else{w=Math.round(w*max/h);h=max;} }
+        canvas.width=w; canvas.height=h;
+        canvas.getContext("2d").drawImage(img,0,0,w,h);
+        arr.push(canvas.toDataURL("image/jpeg",.75));
+        renderPhotoPreviews(arr, pid);
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+  e.target.value = "";
+}
+
+function renderPhotoPreviews(arr, pid) {
+  var el = document.getElementById(pid);
+  el.innerHTML = "";
+  arr.forEach(function(src, idx) {
+    var wrap = document.createElement("div");
+    wrap.className = "pthumb";
+    var img = document.createElement("img");
+    img.src = src;
+    var btn = document.createElement("button");
+    btn.className = "prem";
+    btn.textContent = "x";
+    (function(i, p){ btn.addEventListener("click", function(){ removePhoto(i, p); }); })(idx, pid);
+    wrap.appendChild(img);
+    wrap.appendChild(btn);
+    el.appendChild(wrap);
+  });
+}
+
+function removePhoto(i, pid) {
+  var arr = pid==="photo-preview" ? pendingPhotos : pendingDayPhotos;
+  arr.splice(i,1);
+  renderPhotoPreviews(arr, pid);
+}
+
+function openLightbox(photos, index) {
+  lightboxPhotos=photos; lightboxIndex=index;
+  document.getElementById("lightbox-img").src = photos[index];
+  document.getElementById("lightbox").classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+function closeLightbox() { document.getElementById("lightbox").classList.remove("open"); document.body.style.overflow=""; }
+function lightboxNav(dir) { lightboxIndex=(lightboxIndex+dir+lightboxPhotos.length)%lightboxPhotos.length; document.getElementById("lightbox-img").src=lightboxPhotos[lightboxIndex]; }
+
+function renderStars() {
+  document.querySelectorAll("#stars .star").forEach(function(s) {
+    s.classList.toggle("lit", parseInt(s.dataset.val)<=selectedRating);
+  });
+}
+
+function starStr(n) { if(!n) return ""; var s=""; for(var i=0;i<n;i++)s+="&#9733;"; for(var i=n;i<5;i++)s+="&#9734;"; return s; }
+
+function fmtDate(d) {
+  if(!d) return "";
+  return new Date(d+"T12:00:00").toLocaleDateString("en-CA",{year:"numeric",month:"short",day:"numeric"});
+}
+
+function saveReport() {
+  var lake = document.getElementById("f-lake").value.trim();
+  if (!lake) { showToast("Please enter a lake / location"); return; }
+  var r = {
+    id: Date.now().toString(),
+    savedAt: new Date().toISOString(),
+    lake: lake,
+    site: document.getElementById("f-site").value.trim(),
+    date: document.getElementById("f-date").value,
+    party: document.getElementById("f-party").value,
+    rating: selectedRating,
+    notes: document.getElementById("f-notes").value.trim(),
+    photos: pendingPhotos.slice()
+  };
+  Object.keys(sel).forEach(function(k){ r[k]=sel[k]; });
+  var reports = getReports(); reports.unshift(r); saveReports(reports);
+  resetForm();
+  showToast("Campsite report saved");
+  switchTab("reports");
+}
+
+function resetForm() {
+  ["f-lake","f-site","f-party","f-notes"].forEach(function(id){document.getElementById(id).value="";});
+  document.getElementById("f-date").value = today();
+  selectedRating=0; renderStars();
+  Object.keys(sel).forEach(function(k){delete sel[k];});
+  document.querySelectorAll("#view-log .pill").forEach(function(p){p.classList.remove("on");});
+  pendingPhotos=[]; renderPhotoPreviews(pendingPhotos,"photo-preview");
+}
+
+function renderReportsList() {
+  var reports = getReports();
+  var el = document.getElementById("reports-list");
+  el.innerHTML = "";
+  if (!reports.length) {
+    el.innerHTML = '<div class="empty"><div class="icon">&#127957;</div><p>No campsite reports yet.<br>Head to the + Campsite tab.</p></div>';
+    return;
+  }
+  reports.forEach(function(r) {
+    var card = document.createElement("div");
+    card.className = "card";
+    card.addEventListener("click", (function(id){ return function(){ showDetail(id); }; })(r.id));
+    var top = document.createElement("div");
+    top.style.cssText = "display:flex;justify-content:space-between;align-items:flex-start";
+    var left = document.createElement("div");
+    var title = document.createElement("div"); title.className = "card-title";
+    title.innerHTML = r.lake + (r.site ? " &middot; "+r.site : "");
+    var sub = document.createElement("div"); sub.className = "card-sub";
+    sub.innerHTML = fmtDate(r.date) + (r.party ? " &middot; "+r.party+" people" : "");
+    left.appendChild(title); left.appendChild(sub);
+    var stars = document.createElement("div"); stars.className = "card-stars";
+    stars.innerHTML = starStr(r.rating);
+    top.appendChild(left); top.appendChild(stars);
+    card.appendChild(top);
+    var tags = document.createElement("div"); tags.className = "tags";
+    var tlist = [];
+    if (r.weather) tlist.push({txt:r.weather, cls:""});
+    if (r.water) tlist.push({txt:r.water, cls:r.water.indexOf("clear")>-1?" good":""});
+    if (r.bugs==="Brutal") tlist.push({txt:"Brutal bugs", cls:" warn"});
+    else if (r.bugs && r.bugs!=="None") tlist.push({txt:r.bugs+" bugs", cls:""});
+    if (r.return) tlist.push({txt:"Return: "+r.return, cls:r.return==="Definitely"?" good":r.return==="No"?" warn":""});
+    if (r.photos && r.photos.length) tlist.push({txt:r.photos.length+" photos", cls:""});
+    tlist.forEach(function(t){ var s=document.createElement("span"); s.className="tag"+t.cls; s.textContent=t.txt; tags.appendChild(s); });
+    card.appendChild(tags);
+    el.appendChild(card);
+  });
+}
+
+function showDetail(id) {
+  var r = getReports().find(function(x){return x.id===id;});
+  if (!r) return;
+  currentDetail = r;
+  document.querySelectorAll(".view").forEach(function(v){v.classList.remove("active");});
+  document.getElementById("view-detail").classList.add("active");
+  document.querySelectorAll(".tab").forEach(function(t){t.classList.remove("active");});
+
+  var fields = [
+    ["Date", fmtDate(r.date)], ["Party", r.party ? r.party+" people" : null],
+    ["Rating", r.rating ? starStr(r.rating)+" ("+r.rating+"/5)" : null],
+    ["Tent Pad", r.tentpad], ["Privacy", r.privacy], ["Shade", r.shade], ["Terrain", r.terrain],
+    ["Fire Pit", r.firepit], ["Firewood", r.wood], ["Water", r.water], ["Landing", r.landing],
+    ["Swim", r.swim], ["Thunderbox", r.thunderbox], ["Weather", r.weather], ["Bugs", r.bugs],
+    ["Wildlife", Array.isArray(r.wildlife) ? r.wildlife.join(", ") : r.wildlife],
+    ["Would Return", r.return]
+  ].filter(function(x){return x[1];});
+
+  var html = '<div class="dh"><button class="back" onclick="backToReports()">&#8592;</button>';
+  html += '<div><div class="dtitle">'+r.lake+(r.site?" &middot; "+r.site:"")+'</div>';
+  html += '<div style="font-size:11px;color:var(--mist);margin-top:2px">'+fmtDate(r.date)+'</div></div></div>';
+  if (r.rating) html += '<div style="font-size:24px;margin-bottom:12px;color:var(--amber)">'+starStr(r.rating)+'</div>';
+
+  html += '<div class="dgrid">';
+  var grid = fields.slice(0,8);
+  grid.forEach(function(f){ html += '<div class="db"><div class="dbl">'+f[0]+'</div><div class="dbv">'+f[1]+'</div></div>'; });
+  html += '</div>';
+  fields.slice(8).forEach(function(f){ html += '<div class="db"><div class="dbl">'+f[0]+'</div><div class="dbv">'+f[1]+'</div></div>'; });
+  if (r.notes) html += '<div class="db"><div class="dbl">Notes</div><div class="dbv" style="white-space:pre-wrap">'+r.notes+'</div></div>';
+
+  if (r.photos&&r.photos.length) {
+    html += '<div class="sl" style="margin-top:16px">Photos</div><div class="dpgrid">';
+    r.photos.forEach(function(src,i){ html += '<div class="dphoto" onclick="openDetailPhoto('+i+')"><img src="'+src+'"></div>'; });
+    html += '</div>';
+  }
+
+  // build share row via DOM after setting innerHTML
+  var detailEl = document.getElementById("detail-content");
+  detailEl.innerHTML = html;
+  var srow = document.createElement("div"); srow.className = "srow";
+  var copyBtn = document.createElement("button"); copyBtn.className="sbtn"; copyBtn.textContent="Copy Report";
+  copyBtn.addEventListener("click", copyReport);
+  var aiBtn2 = document.createElement("button"); aiBtn2.className="sbtn"; aiBtn2.textContent="AI Summary";
+  (function(rid){aiBtn2.addEventListener("click",function(){openAiModal("campsite",rid);});})(r.id);
+  var delBtn2 = document.createElement("button"); delBtn2.className="dbtn"; delBtn2.innerHTML="&#128465;";
+  (function(rid){delBtn2.addEventListener("click",function(){deleteReport(rid);});})(r.id);
+  srow.appendChild(copyBtn); srow.appendChild(aiBtn2); srow.appendChild(delBtn2);
+  detailEl.appendChild(srow);
+  return;
+
+
+}
+
+function openDetailPhoto(i) { if(currentDetail&&currentDetail.photos) openLightbox(currentDetail.photos,i); }
+
+function backToReports() {
+  currentDetail=null;
+  document.querySelectorAll(".view").forEach(function(v){v.classList.remove("active");});
+  document.getElementById("view-reports").classList.add("active");
+  document.getElementById("tab-reports").classList.add("active");
+  renderReportsList();
+}
+
+function deleteReport(id) {
+  if (!confirm("Delete this campsite report?")) return;
+  saveReports(getReports().filter(function(r){return r.id!==id;}));
+  var trips=getTrips();
+  trips.forEach(function(t){ if(t.days) t.days.forEach(function(d){ if(d.campsiteId===id) d.campsiteId=null; }); });
+  saveTrips(trips);
+  backToReports();
+  showToast("Report deleted");
+}
+
+function copyReport() {
+  var r = currentDetail; if (!r) return;
+  var nl = "\n";
+  var parts = [
+    "ALGONQUIN CAMPSITE REPORT", "-------------------------",
+    "Lake: " + r.lake + (r.site ? " - "+r.site : ""),
+    "Date: " + fmtDate(r.date)
+  ];
+  if (r.party) parts.push("Party: "+r.party);
+  if (r.rating) parts.push("Rating: "+r.rating+"/5");
+  parts.push("", "SITE CONDITIONS");
+  if (r.tentpad) parts.push("Tent Pad: "+r.tentpad);
+  if (r.privacy) parts.push("Privacy: "+r.privacy);
+  if (r.shade) parts.push("Shade: "+r.shade);
+  if (r.terrain) parts.push("Terrain: "+r.terrain);
+  if (r.firepit) parts.push("Fire Pit: "+r.firepit);
+  if (r.wood) parts.push("Firewood: "+r.wood);
+  if (r.water) parts.push("Water: "+r.water);
+  if (r.landing) parts.push("Landing: "+r.landing);
+  if (r.swim) parts.push("Swim: "+r.swim);
+  if (r.thunderbox) parts.push("Thunderbox: "+r.thunderbox);
+  parts.push("", "WEATHER & WILDLIFE");
+  if (r.weather) parts.push("Weather: "+r.weather);
+  if (r.bugs) parts.push("Bugs: "+r.bugs);
+  if (r.wildlife) parts.push("Wildlife: "+(Array.isArray(r.wildlife)?r.wildlife.join(", "):r.wildlife));
+  if (r.return) parts.push("Would Return: "+r.return);
+  if (r.photos && r.photos.length) parts.push("Photos: "+r.photos.length+" attached");
+  if (r.notes) parts.push("", "NOTES", r.notes);
+  parts.push("", "Logged with Algonquin Trip Log");
+  var text = parts.join(nl);
+  navigator.clipboard.writeText(text).then(function(){showToast("Copied");}).catch(function(){
+    var ta=document.createElement("textarea"); ta.value=text;
+    document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta);
+    showToast("Copied");
+  });
+}
+
+// TRIPS
+function openNewTripModal() {
+  editingTripId=null;
+  document.getElementById("trip-modal-title").textContent="New Trip";
+  ["t-name","t-route","t-party","t-weather","t-highlights","t-notes"].forEach(function(id){document.getElementById(id).value="";});
+  document.getElementById("t-start").value=today();
+  document.getElementById("t-end").value=today();
+  openModal("modal-trip");
+}
+
+function saveTrip() {
+  var name = document.getElementById("t-name").value.trim();
+  if (!name) { showToast("Please enter a trip name"); return; }
+  var data = {
+    name:name, start:document.getElementById("t-start").value, end:document.getElementById("t-end").value,
+    route:document.getElementById("t-route").value.trim(), party:document.getElementById("t-party").value.trim(),
+    weather:document.getElementById("t-weather").value.trim(), highlights:document.getElementById("t-highlights").value.trim(),
+    notes:document.getElementById("t-notes").value.trim()
+  };
+  var trips = getTrips();
+  if (editingTripId) {
+    var idx = trips.findIndex(function(t){return t.id===editingTripId;});
+    if (idx>-1) { trips[idx]=Object.assign(trips[idx],data); saveTrips(trips); closeModal("modal-trip"); showToast("Trip updated"); showTripDetail(editingTripId); return; }
+  }
+  var trip = Object.assign({id:Date.now().toString(),savedAt:new Date().toISOString(),days:[]},data);
+  trips.unshift(trip); saveTrips(trips);
+  closeModal("modal-trip"); showToast("Trip created"); switchTab("trips");
+}
+
+function renderTripsList() {
+  var trips = getTrips();
+  var el = document.getElementById("trips-list");
+  el.innerHTML = "";
+  var newBtn = document.createElement("button");
+  newBtn.className = "btn-primary";
+  newBtn.style.marginBottom = "20px";
+  newBtn.textContent = "+ Start New Trip";
+  newBtn.addEventListener("click", openNewTripModal);
+  el.appendChild(newBtn);
+  if (!trips.length) {
+    var empty = document.createElement("div"); empty.className = "empty";
+    empty.innerHTML = '<div class="icon">&#128758;</div><p>No trips yet.<br>Tap above to start your first trip log.</p>';
+    el.appendChild(empty);
+    return;
+  }
+  trips.forEach(function(t) {
+    var card = document.createElement("div"); card.className = "card";
+    card.addEventListener("click", (function(id){ return function(){ showTripDetail(id); }; })(t.id));
+    var top = document.createElement("div");
+    top.style.cssText = "display:flex;justify-content:space-between;align-items:flex-start";
+    var left = document.createElement("div");
+    var title = document.createElement("div"); title.className="card-title"; title.textContent=t.name;
+    var sub = document.createElement("div"); sub.className="card-sub";
+    sub.textContent = fmtDate(t.start)+(t.end&&t.end!==t.start?" to "+fmtDate(t.end):"");
+    left.appendChild(title); left.appendChild(sub);
+    var icon = document.createElement("span"); icon.style.fontSize="22px"; icon.textContent="&#128758;";
+    top.appendChild(left); top.appendChild(icon);
+    card.appendChild(top);
+    if (t.route) {
+      var rt=document.createElement("div"); rt.style.cssText="font-size:12px;color:var(--mist);margin-top:4px";
+      rt.textContent=t.route; card.appendChild(rt);
+    }
+    var d = t.days ? t.days.length : 0;
+    var cnt = document.createElement("div"); cnt.style.cssText="font-size:11px;color:var(--mist);margin-top:4px";
+    cnt.textContent = d+" day"+(d===1?"":"s")+" logged"+(t.party?" - "+t.party:"");
+    card.appendChild(cnt);
+    el.appendChild(card);
+  });
+}
+
+function showTripDetail(id) {
+  var trip = getTrips().find(function(t){return t.id===id;});
+  if (!trip) return;
+  currentTrip = trip;
+  document.querySelectorAll(".view").forEach(function(v){v.classList.remove("active");});
+  document.getElementById("view-trip-detail").classList.add("active");
+  document.querySelectorAll(".tab").forEach(function(t){t.classList.remove("active");});
+  renderTripDetail(trip);
+}
+
+function renderTripDetail(trip) {
+  var reports = getReports();
+  var days = (trip.days||[]).slice().sort(function(a,b){return a.date>b.date?1:-1;});
+  var el = document.getElementById("trip-detail-content");
+  el.innerHTML = "";
+  var dh = document.createElement("div"); dh.className="dh";
+  var back = document.createElement("button"); back.className="back"; back.innerHTML="&#8592;";
+  back.addEventListener("click", backToTrips);
+  var hinfo = document.createElement("div");
+  var htitle = document.createElement("div"); htitle.className="dtitle"; htitle.textContent=trip.name;
+  var hsub = document.createElement("div"); hsub.style.cssText="font-size:11px;color:var(--mist);margin-top:2px";
+  hsub.textContent = fmtDate(trip.start)+(trip.end&&trip.end!==trip.start?" to "+fmtDate(trip.end):"");
+  hinfo.appendChild(htitle); hinfo.appendChild(hsub);
+  dh.appendChild(back); dh.appendChild(hinfo); el.appendChild(dh);
+  if (trip.route||trip.party) {
+    var grid=document.createElement("div"); grid.className="dgrid";
+    if(trip.route){var b=document.createElement("div");b.className="db";b.innerHTML='<div class="dbl">Route</div><div class="dbv">'+trip.route+'</div>';grid.appendChild(b);}
+    if(trip.party){var b=document.createElement("div");b.className="db";b.innerHTML='<div class="dbl">Party</div><div class="dbv">'+trip.party+'</div>';grid.appendChild(b);}
+    el.appendChild(grid);
+  }
+  if(trip.weather){var b=document.createElement("div");b.className="db";b.innerHTML='<div class="dbl">Weather</div><div class="dbv">'+trip.weather+'</div>';el.appendChild(b);}
+  if(trip.highlights){var b=document.createElement("div");b.className="db";b.innerHTML='<div class="dbl">Highlights</div><div class="dbv" style="white-space:pre-wrap">'+trip.highlights+'</div>';el.appendChild(b);}
+  if(trip.notes){var b=document.createElement("div");b.className="db";b.innerHTML='<div class="dbl">Notes</div><div class="dbv" style="white-space:pre-wrap">'+trip.notes+'</div>';el.appendChild(b);}
+  var sl=document.createElement("div"); sl.className="sl"; sl.style.marginTop="24px"; sl.textContent="Trip Days"; el.appendChild(sl);
+  if(!days.length){var nd=document.createElement("div");nd.style.cssText="color:var(--mist);font-size:13px;margin-bottom:12px";nd.textContent="No days logged yet.";el.appendChild(nd);}
+  days.forEach(function(d) {
+    var linked=d.campsiteId?reports.find(function(r){return r.id===d.campsiteId;}):null;
+    var de=document.createElement("div"); de.className="day-entry";
+    var dh2=document.createElement("div"); dh2.className="day-hdr";
+    var dlbl=document.createElement("div"); dlbl.className="day-lbl"; dlbl.textContent=d.label||fmtDate(d.date);
+    if(d.label){var ds=document.createElement("span");ds.style.cssText="font-size:11px;color:var(--mist);margin-left:8px";ds.textContent=fmtDate(d.date);dlbl.appendChild(ds);}
+    var ebtn=document.createElement("button"); ebtn.className="edit-btn"; ebtn.textContent="Edit";
+    (function(tid,did){ebtn.addEventListener("click",function(){openEditDayModal(tid,did);});})(trip.id,d.id);
+    dh2.appendChild(dlbl); dh2.appendChild(ebtn); de.appendChild(dh2);
+    var tags=document.createElement("div"); tags.className="tags";
+    var tlist=[];
+    if(d.weather)tlist.push({t:d.weather,c:""});
+    if(d.lakes)tlist.push({t:d.lakes,c:""});
+    if(d.portages)tlist.push({t:d.portages,c:""});
+    if(d.distance)tlist.push({t:d.distance+" km",c:" amber"});
+    if(d.photos&&d.photos.length)tlist.push({t:d.photos.length+" photos",c:""});
+    tlist.forEach(function(x){var s=document.createElement("span");s.className="tag"+x.c;s.textContent=x.t;tags.appendChild(s);});
+    de.appendChild(tags);
+    if(d.highlights){var hh=document.createElement("div");hh.style.cssText="font-size:13px;color:var(--birch);margin:8px 0 4px";hh.innerHTML='<span style="font-size:10px;color:var(--lichen);text-transform:uppercase;letter-spacing:.1em">Highlights: </span>'+d.highlights;de.appendChild(hh);}
+    if(d.notes){var nn=document.createElement("div");nn.style.cssText="font-size:12px;color:var(--mist);white-space:pre-wrap";nn.textContent=d.notes;de.appendChild(nn);}
+    if(linked){
+      var lk=document.createElement("div"); lk.className="linked";
+      lk.innerHTML='<span style="font-size:16px">&#127957;</span><div><div class="linked-name">'+linked.lake+(linked.site?" &middot; "+linked.site:"")+'</div><div style="font-size:10px;color:var(--mist)">'+starStr(linked.rating)+' Campsite report</div></div>';
+      (function(lid){lk.addEventListener("click",function(){showDetail(lid);});})(linked.id);
+      de.appendChild(lk);
+    }
+    if(d.photos&&d.photos.length){
+      var pg=document.createElement("div"); pg.className="dpgrid"; pg.style.marginTop="10px";
+      d.photos.forEach(function(src,i){
+        var dp=document.createElement("div"); dp.className="dphoto";
+        var img=document.createElement("img"); img.src=src; dp.appendChild(img);
+        (function(tid,did,idx){dp.addEventListener("click",function(){openDayPhoto(tid,did,idx);});})(trip.id,d.id,i);
+        pg.appendChild(dp);
+      });
+      de.appendChild(pg);
+    }
+    el.appendChild(de);
+  });
+  var addBtn=document.createElement("button"); addBtn.className="btn-outline"; addBtn.textContent="+ Add Day";
+  (function(tid){addBtn.addEventListener("click",function(){openNewDayModal(tid);});})(trip.id);
+  el.appendChild(addBtn);
+  var srow=document.createElement("div"); srow.className="srow"; srow.style.marginTop="16px";
+  var editBtn=document.createElement("button"); editBtn.className="sbtn"; editBtn.textContent="Edit Trip";
+  (function(tid){editBtn.addEventListener("click",function(){editTrip(tid);});})(trip.id);
+  var aiBtn=document.createElement("button"); aiBtn.className="sbtn"; aiBtn.textContent="AI Summary";
+  (function(tid){aiBtn.addEventListener("click",function(){openAiModal("trip",tid);});})(trip.id);
+  var delBtn=document.createElement("button"); delBtn.className="dbtn"; delBtn.innerHTML="&#128465;";
+  (function(tid){delBtn.addEventListener("click",function(){deleteTrip(tid);});})(trip.id);
+  srow.appendChild(editBtn); srow.appendChild(aiBtn); srow.appendChild(delBtn);
+  el.appendChild(srow);
+}
+function openDayPhoto(tid, did, i) {
+  var trip=getTrips().find(function(t){return t.id===tid;});
+  var day=trip&&trip.days?trip.days.find(function(d){return d.id===did;}):null;
+  if(day&&day.photos) openLightbox(day.photos,i);
+}
+
+function backToTrips() {
+  currentTrip=null;
+  document.querySelectorAll(".view").forEach(function(v){v.classList.remove("active");});
+  document.getElementById("view-trips").classList.add("active");
+  document.getElementById("tab-trips").classList.add("active");
+  renderTripsList();
+}
+
+function editTrip(id) {
+  var trip=getTrips().find(function(t){return t.id===id;}); if(!trip) return;
+  editingTripId=id;
+  document.getElementById("trip-modal-title").textContent="Edit Trip";
+  document.getElementById("t-name").value=trip.name||"";
+  document.getElementById("t-start").value=trip.start||today();
+  document.getElementById("t-end").value=trip.end||today();
+  document.getElementById("t-route").value=trip.route||"";
+  document.getElementById("t-party").value=trip.party||"";
+  document.getElementById("t-weather").value=trip.weather||"";
+  document.getElementById("t-highlights").value=trip.highlights||"";
+  document.getElementById("t-notes").value=trip.notes||"";
+  openModal("modal-trip");
+}
+
+function deleteTrip(id) {
+  if (!confirm("Delete this trip? Campsite reports will not be deleted.")) return;
+  saveTrips(getTrips().filter(function(t){return t.id!==id;}));
+  backToTrips(); showToast("Trip deleted");
+}
+
+// DAYS
+function openNewDayModal(tripId) {
+  editingDayId=null; activeTripId=tripId; selectedCampsite=null; dayWeather=null;
+  document.getElementById("day-modal-title").textContent="Add Day";
+  ["d-label","d-lakes","d-portages","d-distance","d-highlights","d-notes"].forEach(function(id){document.getElementById(id).value="";});
+  document.getElementById("d-date").value=today();
+  document.querySelectorAll("#modal-day .pill").forEach(function(p){p.classList.remove("on");});
+  pendingDayPhotos=[]; renderPhotoPreviews(pendingDayPhotos,"day-photo-preview");
+  renderCampsitePicker(null);
+  openModal("modal-day");
+}
+
+function openEditDayModal(tripId, dayId) {
+  var trip=getTrips().find(function(t){return t.id===tripId;});
+  var day=trip&&trip.days?trip.days.find(function(d){return d.id===dayId;}):null;
+  if(!day) return;
+  editingDayId=dayId; activeTripId=tripId; selectedCampsite=day.campsiteId||null; dayWeather=day.weather||null;
+  document.getElementById("day-modal-title").textContent="Edit Day";
+  document.getElementById("d-date").value=day.date||today();
+  document.getElementById("d-label").value=day.label||"";
+  document.getElementById("d-lakes").value=day.lakes||"";
+  document.getElementById("d-portages").value=day.portages||"";
+  document.getElementById("d-distance").value=day.distance||"";
+  document.getElementById("d-highlights").value=day.highlights||"";
+  document.getElementById("d-notes").value=day.notes||"";
+  document.querySelectorAll("#modal-day .pill[data-group='d-weather']").forEach(function(p){p.classList.toggle("on",p.dataset.val===dayWeather);});
+  pendingDayPhotos=(day.photos||[]).slice();
+  renderPhotoPreviews(pendingDayPhotos,"day-photo-preview");
+  renderCampsitePicker(selectedCampsite);
+  openModal("modal-day");
+}
+
+function renderCampsitePicker(selectedId) {
+  var reports = getReports();
+  var el = document.getElementById("campsite-picker");
+  el.innerHTML = "";
+  if (!reports.length) {
+    el.innerHTML = '<div style="font-size:12px;color:var(--mist)">No campsite reports yet.</div>';
+    return;
+  }
+  var noneDiv = document.createElement("div");
+  noneDiv.className = "loption" + (selectedId ? "" : " selected");
+  noneDiv.innerHTML = '<div class="loption-name">None</div>';
+  noneDiv.addEventListener("click", function(){ selectCampsite(null, noneDiv); });
+  el.appendChild(noneDiv);
+  reports.forEach(function(r) {
+    var div = document.createElement("div");
+    div.className = "loption" + (selectedId===r.id ? " selected" : "");
+    var nameDiv = document.createElement("div"); nameDiv.className = "loption-name";
+    nameDiv.textContent = r.lake + (r.site ? " - "+r.site : "");
+    var dateDiv = document.createElement("div"); dateDiv.className = "loption-date";
+    dateDiv.innerHTML = fmtDate(r.date) + " " + starStr(r.rating);
+    var inner = document.createElement("div");
+    inner.appendChild(nameDiv); inner.appendChild(dateDiv);
+    div.appendChild(inner);
+    (function(rid, d){ d.addEventListener("click", function(){ selectCampsite(rid, d); }); })(r.id, div);
+    el.appendChild(div);
+  });
+}
+
+function selectCampsite(id, el) {
+  selectedCampsite=id;
+  document.querySelectorAll(".loption").forEach(function(x){x.classList.remove("selected");});
+  el.classList.add("selected");
+}
+
+function saveDay() {
+  var trips=getTrips(); var idx=trips.findIndex(function(t){return t.id===activeTripId;}); if(idx<0) return;
+  var day={
+    id:editingDayId||Date.now().toString(),
+    date:document.getElementById("d-date").value,
+    label:document.getElementById("d-label").value.trim(),
+    lakes:document.getElementById("d-lakes").value.trim(),
+    portages:document.getElementById("d-portages").value.trim(),
+    distance:document.getElementById("d-distance").value,
+    weather:dayWeather,
+    highlights:document.getElementById("d-highlights").value.trim(),
+    notes:document.getElementById("d-notes").value.trim(),
+    campsiteId:selectedCampsite||null,
+    photos:pendingDayPhotos.slice()
+  };
+  if(!trips[idx].days) trips[idx].days=[];
+  if(editingDayId){var di=trips[idx].days.findIndex(function(d){return d.id===editingDayId;});if(di>-1)trips[idx].days[di]=day;else trips[idx].days.push(day);}
+  else trips[idx].days.push(day);
+  saveTrips(trips); closeModal("modal-day"); showToast(editingDayId?"Day updated":"Day added"); showTripDetail(activeTripId);
+}
+
+// SETTINGS
+function saveApiKey() {
+  var key=document.getElementById("api-key-input").value.trim();
+  if(!key){showToast("Please enter your API key");return;}
+  localStorage.setItem("anthropic_api_key",key);
+  showToast("API key saved");
+}
+
+// AI SUMMARY
+function openAiModal(type, id) {
+  var key=localStorage.getItem("anthropic_api_key");
+  if(!key){showToast("Add your API key in Settings first");switchTab("settings");return;}
+  aiType=type; aiId=id; aiStyle="facebook";
+  document.getElementById("ai-facebook").classList.add("on");
+  document.getElementById("ai-journal").classList.remove("on");
+  document.getElementById("ai-result").style.display="none";
+  document.getElementById("ai-text").textContent="";
+  document.getElementById("ai-gen-btn").textContent="Generate Summary";
+  document.getElementById("ai-gen-btn").disabled=false;
+  openModal("modal-ai");
+}
+
+function setAiStyle(style) {
+  aiStyle=style;
+  document.getElementById("ai-facebook").classList.toggle("on",style==="facebook");
+  document.getElementById("ai-journal").classList.toggle("on",style==="journal");
+}
+
+function buildCampsitePrompt(r, style) {
+  var nl = "\n";
+  var facts = [];
+  facts.push("Lake: "+r.lake+(r.site?" - "+r.site:""));
+  facts.push("Date: "+fmtDate(r.date));
+  if(r.party) facts.push("Party: "+r.party);
+  if(r.rating) facts.push("Rating: "+r.rating+"/5");
+  if(r.tentpad) facts.push("Tent pad: "+r.tentpad);
+  if(r.privacy) facts.push("Privacy: "+r.privacy);
+  if(r.shade) facts.push("Shade: "+r.shade);
+  if(r.terrain) facts.push("Terrain: "+r.terrain);
+  if(r.firepit) facts.push("Fire pit: "+r.firepit);
+  if(r.wood) facts.push("Firewood: "+r.wood);
+  if(r.water) facts.push("Water: "+r.water);
+  if(r.landing) facts.push("Landing: "+r.landing);
+  if(r.swim) facts.push("Swim: "+r.swim);
+  if(r.thunderbox) facts.push("Thunderbox: "+r.thunderbox);
+  if(r.weather) facts.push("Weather: "+r.weather);
+  if(r.bugs) facts.push("Bugs: "+r.bugs);
+  if(r.wildlife) facts.push("Wildlife: "+(Array.isArray(r.wildlife)?r.wildlife.join(", "):r.wildlife));
+  if(r.return) facts.push("Would return: "+r.return);
+  if(r.notes) facts.push("Notes: "+r.notes);
+  var factsStr = facts.join(nl);
+  if(style==="facebook") return "Write an engaging, friendly campsite review for the Facebook group All of Algonquin. Warm, knowledgeable tone, practical tips, 2-3 paragraphs, no hashtags."+nl+nl+"Field notes:"+nl+factsStr;
+  return "Write a personal journal entry about this Algonquin campsite stay. First-person, reflective, 2-3 paragraphs."+nl+nl+"Field notes:"+nl+factsStr;
+}
+
+function buildTripPrompt(trip, style) {
+  var nl = "\n";
+  var reports = getReports();
+  var days = (trip.days||[]).slice().sort(function(a,b){return a.date>b.date?1:-1;});
+  var facts = "Trip: "+trip.name+nl;
+  if(trip.start) facts += "Dates: "+fmtDate(trip.start)+(trip.end&&trip.end!==trip.start?" to "+fmtDate(trip.end):"")+nl;
+  if(trip.route) facts += "Route: "+trip.route+nl;
+  if(trip.party) facts += "Party: "+trip.party+nl;
+  if(trip.weather) facts += "Weather: "+trip.weather+nl;
+  if(trip.highlights) facts += "Highlights: "+trip.highlights+nl;
+  if(trip.notes) facts += "Notes: "+trip.notes+nl;
+  if(days.length) {
+    facts += nl+"Days:"+nl;
+    days.forEach(function(d){
+      facts += "- "+(d.label||fmtDate(d.date))+": ";
+      if(d.lakes) facts += d.lakes+". ";
+      if(d.portages) facts += d.portages+". ";
+      if(d.distance) facts += d.distance+"km. ";
+      if(d.weather) facts += d.weather+". ";
+      if(d.highlights) facts += "Highlight: "+d.highlights+". ";
+      var linked = d.campsiteId ? reports.find(function(r){return r.id===d.campsiteId;}) : null;
+      if(linked) facts += "Camped at "+linked.lake+(linked.site?" site "+linked.site:"")+(linked.rating?" ("+linked.rating+"/5)":".")+".";
+      facts += nl;
+    });
+  }
+  if(style==="facebook") return "Write an engaging trip report for the Facebook group All of Algonquin. Friendly, detailed, 3-4 paragraphs, no hashtags."+nl+nl+"Field notes:"+nl+facts;
+  return "Write a personal journal summary of this Algonquin canoe trip. First-person, reflective, 3-4 paragraphs."+nl+nl+"Field notes:"+nl+facts;
+}
+
+async function generateSummary() {
+  var key=localStorage.getItem("anthropic_api_key"); if(!key){showToast("No API key");return;}
+  var btn=document.getElementById("ai-gen-btn");
+  btn.textContent="Generating..."; btn.disabled=true;
+  document.getElementById("ai-result").style.display="none";
+  var prompt="";
+  if(aiType==="campsite"){var r=getReports().find(function(x){return x.id===aiId;});if(!r){showToast("Not found");btn.textContent="Generate Summary";btn.disabled=false;return;}prompt=buildCampsitePrompt(r,aiStyle);}
+  else{var trip=getTrips().find(function(t){return t.id===aiId;});if(!trip){showToast("Not found");btn.textContent="Generate Summary";btn.disabled=false;return;}prompt=buildTripPrompt(trip,aiStyle);}
+  try{
+    var res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:1024,messages:[{role:"user",content:prompt}]})});
+    var data=await res.json();
+    if(data.error){showToast("API error: "+data.error.message);btn.textContent="Generate Summary";btn.disabled=false;return;}
+    document.getElementById("ai-text").textContent=data.content[0].text;
+    document.getElementById("ai-result").style.display="block";
+    btn.textContent="Regenerate"; btn.disabled=false;
+  }catch(err){showToast("Error: "+err.message);btn.textContent="Generate Summary";btn.disabled=false;}
+}
+
+function copyAiText(){
+  var text=document.getElementById("ai-text").textContent;
+  navigator.clipboard.writeText(text).then(function(){showToast("Copied");}).catch(function(){var ta=document.createElement("textarea");ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand("copy");document.body.removeChild(ta);showToast("Copied");});
+}
+
+var toastTimer;
+function showToast(msg){var t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(function(){t.classList.remove("show");},2500);}
+</script>
+</body>
+</html>
